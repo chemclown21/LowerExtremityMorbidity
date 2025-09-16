@@ -284,7 +284,12 @@ for_sure_reject = [
 "W64",#:  Exposure to other animate mechanical forces
 "W85",#:  Exposure to electric transmission lines
 "W86",#:  Exposure to other specified electric current
-"W94"]#:  Exposure to high and low air pressure and changes in air pressure
+"W94",#:  Exposure to high and low air pressure and changes in air pressure
+"Y33",
+"V03",
+"V00",
+"V18"]
+
 
 fall_same_level_dict =      dict.fromkeys(fall_same_level            ,True)
 fall_same_level_dict.update(dict.fromkeys(other_falls+for_sure_reject,False))
@@ -316,7 +321,7 @@ race_dict.update(dict.fromkeys(['Black or African American']                    
 race_dict.update(dict.fromkeys(['Other','Pacific Islander','American Indian','Asian'],"Race-Other"))
 
 
-df = pd.read_csv('C:/Users/tim/Desktop/code/anth/geriatric_processed_data_17_23.csv')
+df = pd.read_csv('geriatric_processed_data_17_23.csv')
 N = len(df)
 
 #Insert new columns
@@ -390,26 +395,40 @@ for index, patient in df.iterrows():
 
     #Race - Unknown
     if patient["Race Complete"] == 'Unknown':
-        remove.append(index)
+        #remove.append(index)
+        #dont actually remove!
+        df.loc[index,"Race Complete"] = np.nan
         #print("Remove patient ",index," - basis: race ",patient["Race Complete"])
+
     #Primary Method Payment - NaN
     if str(patient['primarymethodpayment']) == 'nan':
-        remove.append(index)
+        #remove.append(index)
+        #dont actually remove!
+        df.loc[index,'primarymethodpayment'] = np.nan
         #print("Remove patient ",index," - basis: payment ",patient["primarymethodpayment"])
+    
     #Sex - NaN
     if str(patient['SEX']) == 'nan':
-        remove.append(index)
+        #remove.append(index)
+        #dont actually remove!
+        df.loc[index,'SEX'] = np.nan
         #print("Remove patient ",index," - basis: SEX ",patient["SEX"])
     #eddischargedisposition - NaN
     if str(patient['eddischargedisposition']) == 'nan':
-        remove.append(index)
+        #remove.append(index)
+        #dont actually remove!
+        df.loc[index,'eddischargedisposition'] = np.nan
         #print("Remove patient ",index," - basis: eddischargedisposition ",patient["eddischargedisposition"])
     #hospdischargedisposition - NaN
     if str(patient['hospdischargedisposition']) == 'nan':
-        remove.append(index)
+        #remove.append(index)
+        #dont actually remove!
+        df.loc[index,'hospdischargedisposition'] = np.nan
         #print("Remove patient ",index," - basis: hospdischargedisposition ",patient["hospdischargedisposition"])
     if str(patient['mechanism'])=='nan':
-        remove.append(index)
+        #remove.append(index)
+        #dont actually remove!
+        df.loc[index,'mechanism'] = np.nan
         #print("Remove patient ",index," - basis: mechanism ",patient["mechanism"])
     #Spinal Injury
     LE_codes = csc(patient['LE_Dcode'])
@@ -418,7 +437,7 @@ for index, patient in df.iterrows():
         if ("S32.0" in code or "S32.1" in code or "S32.2" in code): #ignore spine (not included in sharfman labels)
             if index not in remove: 
                 remove.append(index)
-                #print("Remove patient ",index," - basis: spine injury ",patient["LE_Dcode"])
+                print("Remove patient ",index," - basis: spine injury ",patient["LE_Dcode"])
     
 df = df.drop(index=remove)
 N2 = len(df)
@@ -429,18 +448,21 @@ print("Dropped ",len(remove)," patients. From ",N," to ",N2)
 for index, patient in df.iterrows():
     
     race = patient["Race Complete"]
-    df.loc[index,race_dict[race]] = True
+    if str(race) != 'nan':
+        df.loc[index,race_dict[race]] = True
     if race == 'White, Hispanic':
         df.loc[index,"Hispanic"] = True
 
     sex = patient["SEX"]
-    df.loc[index,sex_dict[sex]] = True
+    if str(sex) != 'nan':
+        df.loc[index,sex_dict[sex]] = True
 
     payment = patient['primarymethodpayment']
     if payment == "Private/Commerical Insurance":
         df.loc[index,"Payment-Private/Commercial Insurance"] = True
-    else: 
+    elif str(payment) != 'nan':
         df.loc[index,"Payment-"+payment] = True
+        
 
     discharge = patient['hospdischargedisposition']
     if (discharge == "Discharged/Transferred to inpatient rehab or designated unit") or (discharge == '11.0') or (discharge == 11): #or ('11' in discharge)
@@ -551,9 +573,10 @@ for index, patient in df.iterrows():
             
     #mechanism - fall or?
     mechanism_no = patient['mechanism']
-    mechanism = mech_dict[mechanism_no]
-    print("Patient ",index," mechanism: ",mechanism_no," ",mechanism)
-    df.loc[index,mechanism] = True
+    if str(mechanism_no) != 'nan':
+        mechanism = mech_dict[mechanism_no]
+        print("Patient ",index," mechanism: ",mechanism_no," ",mechanism)
+        df.loc[index,mechanism] = True
     
     #comorbidities
     for j in range(len(comorbities)):
